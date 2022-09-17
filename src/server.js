@@ -1,6 +1,7 @@
 import express from "express";
 import http from "http";
 import WebSocket from "ws";
+// import SokcetIO from "socket.io";
 
 const app = express();
 
@@ -16,18 +17,36 @@ app.get("/*", (_, res) => {
   res.redirect("/");
 });
 
-// app.listen(3000, () => {
-//   console.log(`Listening on http://localhost:3000`);
-// });
-
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
+// const wsServer = SokcetIO(httpServer);
 
+const sockets = [];
 wss.on("connection", (socket) => {
+  sockets.push(socket);
+  socket["nickname"] = "Anonymous";
   console.log("Connected to Browser");
-  socket.send("hello!!!");
+  socket.on("close", () => {
+    console.log("Disconnected from the Browser");
+  });
+  socket.on("message", (msg) => {
+    const message = JSON.parse(msg);
+    if (message.type === "nickname") {
+      socket["nickname"] = message.payload;
+    }
+    if (message.type === "new_message") {
+      sockets.forEach((aSocket) => {
+        if (aSocket !== socket) {
+          aSocket.send(`${socket.nickname} : ${message.payload}`);
+        }
+      });
+    }
+    // console.log(message.toString('utf8')); 
+  });
 });
 
-server.listen(3000, () => {
-  console.log(`Listening on ws://localhost:3000`);
+const port = 3000;
+
+server.listen(port, () => {
+  console.log(`Listening on ws://localhost:${port}`);
 });
