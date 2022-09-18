@@ -1,8 +1,8 @@
 import express from "express";
 import http from "http";
 // import WebSocket from "ws";
-import SokcetIO from "socket.io";
-// import { instrument } from "@socket.io/admin-ui";
+import { Server  } from "socket.io";
+import { instrument } from "@socket.io/admin-ui";
 
 const app = express();
 
@@ -20,7 +20,16 @@ app.get("/*", (_, res) => {
 
 const httpServer = http.createServer(app);
 // const wss = new WebSocket.Server({ httpServer });
-const wsServer = SokcetIO(httpServer);
+const wsServer = new Server(httpServer, {
+  cors: {
+    origin: ["https://admin.socket.io"],
+    credentials: true
+  }
+});
+
+instrument(wsServer, {
+  auth: false
+});
 
 function publicRooms() {
   const { sids, rooms } = wsServer.sockets.adapter;
@@ -49,6 +58,7 @@ wsServer.on("connection", (socket) => {
     socket.join(roomName);
     done();
     socket.to(roomName).emit("welcome", socket.nickname, countRoom(roomName));
+    socket.emit("welcome_count", countRoom(roomName));
     // 방 입장할 때마다 방 개수를 emit
     wsServer.sockets.emit("room_change", publicRooms());
   });
@@ -96,5 +106,5 @@ wsServer.on("connection", (socket) => {
 const port = 3000;
 
 httpServer.listen(port, () => {
-  console.log(`Listening on ws://localhost:${port}`);
+  console.log(`Listening on http://localhost:${port} && Admin : https://admin.socket.io`);
 });

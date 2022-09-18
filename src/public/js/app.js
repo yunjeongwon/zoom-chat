@@ -21,7 +21,7 @@ form.addEventListener("submit", (e) => {
     welcome.hidden = true;
     room.hidden = false;
     const h3 = room.querySelector("h3");
-    h3.innerText = `Room ${roomName} (1)`;
+    h3.innerText = `Room ${roomName}`;
     const nameForm = document.querySelector("#name");
     const msgForm = document.querySelector("#msg");
 
@@ -71,4 +71,9 @@ socket.on("room_change", (rooms) => {
     li.innerText = room;
     roomList.appendChild(li);
   });
+});
+
+socket.on("welcome_count", (newCount) => {
+  const h3 = room.querySelector("h3");
+  h3.innerText = `Room ${roomName} (${newCount})`;
 });
